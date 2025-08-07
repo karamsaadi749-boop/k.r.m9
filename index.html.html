@@ -1,0 +1,2444 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام إدارة MK - مقهى وصالة ألعاب</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  <style>
+    :root {
+      --primary-color: #6a1b9a;
+      --secondary-color: #ff9800;
+      --dark-color: #333;
+      --light-color: #f5f5f5;
+      --success-color: #4caf50;
+      --danger-color: #f44336;
+      --warning-color: #ffc107;
+      --info-color: #2196F3;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Tajawal', 'Arial', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: #f0f0f0;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* شاشة الدخول */
+    .login-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-screen::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.1) 80%, transparent 80%, transparent);
+      background-size: 100px 100px;
+      transform: rotate(30deg);
+      z-index: 1;
+    }
+
+    .login-screen.hidden {
+      display: none;
+    }
+
+    .logo {
+      font-size: 4rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .logo span {
+      color: var(--secondary-color);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    .login-form {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 2rem;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 400px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      position: relative;
+      z-index: 2;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .login-form input {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 1.5rem;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.9);
+      font-size: 1.1rem;
+      transition: all 0.3s;
+    }
+
+    .login-form input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(106, 27, 154, 0.3);
+    }
+
+    .login-form button {
+      width: 100%;
+      padding: 15px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .login-form button:hover {
+      background-color: #e68a00;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert-danger {
+      background-color: #f2dede;
+      color: #a94442;
+      border: 1px solid #ebccd1;
+    }
+
+    .close-alert {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #a94442;
+      transition: all 0.2s;
+    }
+
+    .close-alert:hover {
+      transform: scale(1.2);
+    }
+
+    /* الشاشة الرئيسية */
+    .main-screen {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%231f1f2e" fill-opacity="0.8"/><path d="M0 50 L50 0 L100 50 L50 100 Z" fill="%23222" fill-opacity="0.1"/></svg>');
+      background-size: 120px;
+    }
+
+    .main-screen.active {
+      display: flex;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      position: relative;
+      z-index: 10;
+    }
+
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.25);
+      transform: translateY(-2px);
+    }
+
+    .content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: rgba(30, 30, 46, 0.85);
+      border-right: 1px solid rgba(255,255,255,0.05);
+      padding: 1.5rem 1rem;
+      overflow-y: auto;
+      backdrop-filter: blur(5px);
+      transition: all 0.3s;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+    }
+
+    .sidebar-menu li {
+      margin-bottom: 0.8rem;
+    }
+
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      padding: 14px 18px;
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      border-radius: 10px;
+      transition: all 0.3s;
+      font-size: 1.1rem;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+      background: rgba(106, 27, 154, 0.25);
+      color: white;
+      border-left: 3px solid var(--secondary-color);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .sidebar-menu i {
+      margin-left: 12px;
+      width: 25px;
+      text-align: center;
+      font-size: 1.2rem;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+      background: rgba(15, 15, 25, 0.6);
+      backdrop-filter: blur(5px);
+    }
+
+    /* لوحة التحكم */
+    .dashboard-section {
+      display: none;
+    }
+
+    .dashboard-section.active {
+      display: block;
+    }
+
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+
+    .stat-card {
+      background: rgba(40, 40, 60, 0.7);
+      padding: 1.8rem 1.5rem;
+      border-radius: 15px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      text-align: center;
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.05);
+      backdrop-filter: blur(5px);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      background: rgba(50, 50, 70, 0.8);
+    }
+
+    .stat-card h3 {
+      color: var(--secondary-color);
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+    }
+
+    .stat-card p {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    /* قسم المقهى */
+    .cafe-section {
+      display: none;
+    }
+
+    .cafe-section.active {
+      display: block;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .section-header h2 {
+      font-size: 1.8rem;
+      color: var(--secondary-color);
+    }
+
+    .tables-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.8rem;
+    }
+
+    .table {
+      background: rgba(40, 40, 60, 0.7);
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.05);
+      backdrop-filter: blur(5px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .table::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: var(--secondary-color);
+    }
+
+    .table:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.2);
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .table-title {
+      font-weight: bold;
+      font-size: 1.4rem;
+      color: white;
+    }
+
+    .table-status {
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .status-available {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .status-busy {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .table-details {
+      margin-bottom: 1.5rem;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .menu-items {
+      margin-top: 1.5rem;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px dashed rgba(255,255,255,0.1);
+    }
+
+    .menu-item img {
+      width: 55px;
+      height: 55px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-left: 0.8rem;
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .item-info {
+      flex: 1;
+    }
+
+    .item-name {
+      font-weight: bold;
+      color: white;
+    }
+
+    .item-price {
+      color: var(--secondary-color);
+      font-weight: bold;
+    }
+
+    .total-price {
+      text-align: right;
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-top: 1.5rem;
+      color: var(--secondary-color);
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-add {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-add:hover:not(:disabled) {
+      background-color: #5a148a;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-clear {
+      background-color: var(--warning-color);
+      color: var(--dark-color);
+    }
+
+    .btn-clear:hover:not(:disabled) {
+      background-color: #e6b000;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-checkout {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .btn-checkout:hover:not(:disabled) {
+      background-color: #3d8b40;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* قسم صالة الألعاب */
+    .gaming-section {
+      display: none;
+    }
+
+    .gaming-section.active {
+      display: block;
+    }
+
+    .devices-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.8rem;
+    }
+
+    .device {
+      background: rgba(40, 40, 60, 0.7);
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.05);
+      backdrop-filter: blur(5px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .device::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: var(--info-color);
+    }
+
+    .device:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.2);
+    }
+
+    .device-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .device-title {
+      font-weight: bold;
+      font-size: 1.4rem;
+      color: white;
+    }
+
+    .device-details {
+      margin-bottom: 1.5rem;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .timer {
+      font-size: 1.8rem;
+      font-weight: bold;
+      text-align: center;
+      margin: 1.5rem 0;
+      color: var(--info-color);
+      text-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+    }
+
+    .price {
+      text-align: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      color: var(--secondary-color);
+      font-weight: bold;
+    }
+
+    .device-actions {
+      display: flex;
+      gap: 0.8rem;
+    }
+
+    .btn-start {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .btn-start:hover:not(:disabled) {
+      background-color: #3d8b40;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-end {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .btn-end:hover:not(:disabled) {
+      background-color: #d32f2f;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* إعدادات النظام */
+    .settings-section {
+      display: none;
+    }
+
+    .settings-section.active {
+      display: block;
+    }
+
+    .settings-form {
+      background: rgba(40, 40, 60, 0.7);
+      border-radius: 15px;
+      padding: 2rem;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .settings-tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 1.8rem;
+    }
+
+    .settings-tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .settings-tab:hover {
+      color: white;
+    }
+
+    .settings-tab.active {
+      border-bottom-color: var(--secondary-color);
+      color: var(--secondary-color);
+      font-weight: bold;
+    }
+
+    .settings-tab-content {
+      display: none;
+    }
+
+    .settings-tab-content.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.8rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      font-size: 1.1rem;
+      background: rgba(30, 30, 46, 0.5);
+      color: white;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+    }
+
+    .color-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .color-option {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .color-option:hover,
+    .color-option.selected {
+      border-color: white;
+      transform: scale(1.15);
+    }
+
+    .menu-items-list {
+      margin-top: 1.5rem;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .menu-item-card {
+      display: flex;
+      align-items: center;
+      background: rgba(30, 30, 46, 0.5);
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 0.8rem;
+      transition: all 0.3s;
+    }
+
+    .menu-item-card:hover {
+      background: rgba(50, 50, 70, 0.7);
+      transform: translateX(5px);
+    }
+
+    .menu-item-card img {
+      width: 55px;
+      height: 55px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-left: 0.8rem;
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .menu-item-info {
+      flex: 1;
+    }
+
+    .menu-item-info div:first-child {
+      font-weight: bold;
+      color: white;
+    }
+
+    .menu-item-info div:last-child {
+      color: var(--secondary-color);
+      font-size: 0.9rem;
+    }
+
+    .menu-item-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-edit {
+      background-color: var(--warning-color);
+      color: var(--dark-color);
+      padding: 8px 12px;
+    }
+
+    .btn-delete {
+      background-color: var(--danger-color);
+      color: white;
+      padding: 8px 12px;
+    }
+
+    /* النوافذ المنبثقة */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #2a2a45, #1e1e35);
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+      animation: modalFadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.2rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--secondary-color);
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 2rem;
+      cursor: pointer;
+      color: rgba(255,255,255,0.7);
+      transition: all 0.3s;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+    }
+
+    .close-modal:hover {
+      color: white;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .modal-body {
+      margin-bottom: 1.8rem;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .modal-body p {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .modal-body strong {
+      color: var(--secondary-color);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.8rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* تصميم متجاوب */
+    @media (max-width: 992px) {
+      .stats-container,
+      .tables-container,
+      .devices-container {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding: 1rem;
+      }
+      
+      .sidebar-menu {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 10px;
+      }
+      
+      .sidebar-menu li {
+        margin-bottom: 0;
+        margin-right: 0.8rem;
+      }
+      
+      .sidebar-menu a {
+        padding: 10px 15px;
+        white-space: nowrap;
+      }
+      
+      .logo {
+        font-size: 3rem;
+      }
+      
+      .header h1 {
+        font-size: 1.3rem;
+      }
+      
+      .stats-container,
+      .tables-container,
+      .devices-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .modal-content {
+        padding: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-form {
+        padding: 1.5rem;
+      }
+      
+      .table-actions,
+      .device-actions,
+      .modal-footer {
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+      
+      .modal-footer .btn {
+        width: 100%;
+      }
+    }
+
+    /* طباعة الفاتورة */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #invoice-print, #invoice-print * {
+        visibility: visible;
+      }
+      #invoice-print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        background: white;
+        color: black;
+      }
+    }
+
+    /* أدوات التحكم الكامل */
+    .admin-controls {
+      background: rgba(30, 30, 50, 0.7);
+      padding: 1.5rem;
+      border-radius: 15px;
+      margin-top: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .admin-section {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .admin-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .admin-section h4 {
+      color: var(--secondary-color);
+      margin-bottom: 1.2rem;
+      font-size: 1.3rem;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .admin-item {
+      background: rgba(20, 20, 35, 0.6);
+      border-radius: 10px;
+      padding: 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .admin-item:hover {
+      background: rgba(40, 40, 60, 0.8);
+      transform: translateY(-5px);
+    }
+
+    .admin-item i {
+      font-size: 2.5rem;
+      margin-bottom: 0.8rem;
+      color: var(--secondary-color);
+    }
+
+    .admin-item span {
+      display: block;
+      font-weight: bold;
+    }
+
+    /* الإشعارات */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 18px 25px;
+      background: var(--primary-color);
+      color: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      max-width: 400px;
+      animation: slideIn 0.5s, fadeOut 0.5s 4.5s;
+      transform: translateX(0);
+      border-left: 5px solid var(--secondary-color);
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    .notification i {
+      font-size: 1.8rem;
+    }
+
+    .notification-content {
+      flex: 1;
+    }
+
+    .notification h4 {
+      margin-bottom: 5px;
+      font-size: 1.2rem;
+    }
+
+    .notification p {
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    .notification-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      opacity: 0.7;
+    }
+
+    .notification-close:hover {
+      opacity: 1;
+    }
+
+    .notification.warning {
+      background: var(--warning-color);
+      color: #333;
+      border-left-color: #e6ac00;
+    }
+
+    .notification.success {
+      background: var(--success-color);
+      border-left-color: #3d8b40;
+    }
+
+    .notification.info {
+      background: var(--info-color);
+      border-left-color: #0b7dda;
+    }
+
+    .notification.danger {
+      background: var(--danger-color);
+      border-left-color: #d32f2f;
+    }
+
+    /* تحميل */
+    .loader {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- شاشة الدخول -->
+  <div class="login-screen" id="loginScreen">
+    <div class="logo">M<span>K</span></div>
+    <div class="login-form">
+      <input type="password" id="passwordInput" placeholder="أدخل رمز الدخول">
+      <button id="loginBtn">دخول</button>
+      <div class="alert alert-danger" id="loginError">
+        <span>رمز الدخول غير صحيح!</span>
+        <button class="close-alert" id="closeLoginError">&times;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الشاشة الرئيسية -->
+  <div class="main-screen" id="mainScreen">
+    <!-- الهيدر -->
+    <div class="header">
+      <h1>نظام إدارة MK - مقهى وصالة ألعاب</h1>
+      <button class="logout-btn" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i> تسجيل خروج
+      </button>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="content">
+      <!-- القائمة الجانبية -->
+      <div class="sidebar">
+        <ul class="sidebar-menu">
+          <li>
+            <a href="#" class="active" data-section="dashboard">
+              <i class="fas fa-home"></i> لوحة التحكم
+            </a>
+          </li>
+          <li>
+            <a href="#" data-section="cafe">
+              <i class="fas fa-coffee"></i> إدارة المقهى
+            </a>
+          </li>
+          <li>
+            <a href="#" data-section="gaming">
+              <i class="fas fa-gamepad"></i> إدارة صالة الألعاب
+            </a>
+          </li>
+          <li>
+            <a href="#" data-section="settings">
+              <i class="fas fa-cog"></i> إعدادات النظام
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- المحتوى الرئيسي -->
+      <div class="main-content">
+        <!-- لوحة التحكم -->
+        <div class="dashboard-section active" id="dashboardSection">
+          <h2>مرحبًا بك في نظام إدارة MK</h2>
+          <p>يمكنك اختيار القسم الذي تريد إدارته من القائمة الجانبية.</p>
+          <div class="stats-container">
+            <div class="stat-card">
+              <h3>الطاولات المشغولة</h3>
+              <p id="occupiedTables">0</p>
+            </div>
+            <div class="stat-card">
+              <h3>الأجهزة المشغولة</h3>
+              <p id="occupiedDevices">0</p>
+            </div>
+            <div class="stat-card">
+              <h3>الإيرادات اليوم</h3>
+              <p id="todayRevenue">0 دينار</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- قسم المقهى -->
+        <div class="cafe-section" id="cafeSection">
+          <div class="section-header">
+            <h2>إدارة المقهى</h2>
+            <button class="btn btn-add" id="addTableBtn">
+              <i class="fas fa-plus"></i> إضافة طاولة
+            </button>
+          </div>
+          <div class="tables-container" id="tablesContainer">
+            <!-- سيتم إضافة الطاولات هنا عبر JavaScript -->
+          </div>
+        </div>
+
+        <!-- قسم صالة الألعاب -->
+        <div class="gaming-section" id="gamingSection">
+          <div class="section-header">
+            <h2>إدارة صالة الألعاب</h2>
+            <p>سعر الساعة: <strong>3000 دينار</strong></p>
+          </div>
+          <div class="devices-container" id="devicesContainer">
+            <!-- سيتم إضافة الأجهزة هنا عبر JavaScript -->
+          </div>
+        </div>
+
+        <!-- إعدادات النظام -->
+        <div class="settings-section" id="settingsSection">
+          <h2>إعدادات النظام</h2>
+          <div class="settings-tabs">
+            <div class="settings-tab active" data-tab="appearance">المظهر</div>
+            <div class="settings-tab" data-tab="menu">قائمة الطعام</div>
+            <div class="settings-tab" data-tab="gaming">إعدادات الألعاب</div>
+            <div class="settings-tab" data-tab="admin">التحكم الكامل</div>
+          </div>
+          <div class="settings-form">
+            <!-- إعدادات المظهر -->
+            <div class="settings-tab-content active" id="appearanceTab">
+              <h3>تخصيص مظهر النظام</h3>
+              <div class="form-group">
+                <label>اللون الأساسي</label>
+                <div class="color-options">
+                  <div class="color-option selected" style="background-color: #6a1b9a;" data-color="6a1b9a"></div>
+                  <div class="color-option" style="background-color: #2196F3;" data-color="2196F3"></div>
+                  <div class="color-option" style="background-color: #4CAF50;" data-color="4CAF50"></div>
+                  <div class="color-option" style="background-color: #FF5722;" data-color="FF5722"></div>
+                  <div class="color-option" style="background-color: #9C27B0;" data-color="9C27B0"></div>
+                  <div class="color-option" style="background-color: #3F51B5;" data-color="3F51B5"></div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>اللون الثانوي</label>
+                <div class="color-options">
+                  <div class="color-option selected" style="background-color: #ff9800;" data-color="ff9800"></div>
+                  <div class="color-option" style="background-color: #607D8B;" data-color="607D8B"></div>
+                  <div class="color-option" style="background-color: #795548;" data-color="795548"></div>
+                  <div class="color-option" style="background-color: #009688;" data-color="009688"></div>
+                  <div class="color-option" style="background-color: #E91E63;" data-color="E91E63"></div>
+                  <div class="color-option" style="background-color: #00BCD4;" data-color="00BCD4"></div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>شعار النظام</label>
+                <input type="file" id="logoUpload">
+              </div>
+              <button class="btn btn-add" id="saveAppearanceBtn">حفظ التغييرات</button>
+            </div>
+
+            <!-- إعدادات قائمة الطعام -->
+            <div class="settings-tab-content" id="menuTab">
+              <h3>إدارة قائمة الطعام</h3>
+              <button class="btn btn-add" id="addMenuItemBtn" style="margin-bottom: 1.5rem;">
+                <i class="fas fa-plus"></i> إضافة عنصر جديد
+              </button>
+              <div class="menu-items-list" id="menuItemsList">
+                <!-- سيتم عرض عناصر القائمة هنا -->
+              </div>
+            </div>
+
+            <!-- إعدادات الألعاب -->
+            <div class="settings-tab-content" id="gamingTab">
+              <h3>إعدادات صالة الألعاب</h3>
+              <div class="form-group">
+                <label>عدد الأجهزة</label>
+                <input type="number" id="devicesCount" min="1" max="20" value="8">
+              </div>
+              <div class="form-group">
+                <label>سعر الساعة (دينار)</label>
+                <input type="number" id="hourlyPrice" min="100" value="3000">
+              </div>
+              <button class="btn btn-add" id="saveGamingSettingsBtn">حفظ التغييرات</button>
+            </div>
+
+            <!-- التحكم الكامل -->
+            <div class="settings-tab-content" id="adminTab">
+              <h3>التحكم الكامل في النظام</h3>
+              <div class="form-group">
+                <label>كلمة المرور للتحكم (k4r4m)</label>
+                <input type="password" id="adminPassword" placeholder="أدخل كلمة المرور">
+                <button class="btn btn-add" id="adminLoginBtn" style="margin-top: 15px;">دخول</button>
+              </div>
+              <div id="adminControls" style="display:none;">
+                <div class="admin-controls">
+                  <div class="admin-section">
+                    <h4>أدوات التحكم</h4>
+                    <div class="admin-grid">
+                      <div class="admin-item" data-action="resetSystem">
+                        <i class="fas fa-redo"></i>
+                        <span>إعادة ضبط النظام</span>
+                      </div>
+                      <div class="admin-item" data-action="exportData">
+                        <i class="fas fa-file-export"></i>
+                        <span>تصدير البيانات</span>
+                      </div>
+                      <div class="admin-item" data-action="importData">
+                        <i class="fas fa-file-import"></i>
+                        <span>استيراد البيانات</span>
+                      </div>
+                      <div class="admin-item" data-action="backupData">
+                        <i class="fas fa-database"></i>
+                        <span>نسخ احتياطي</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="admin-section">
+                    <h4>إدارة المحتوى</h4>
+                    <div class="admin-grid">
+                      <div class="admin-item" data-action="editMenu">
+                        <i class="fas fa-utensils"></i>
+                        <span>تعديل القائمة</span>
+                      </div>
+                      <div class="admin-item" data-action="editTables">
+                        <i class="fas fa-chair"></i>
+                        <span>تعديل الطاولات</span>
+                      </div>
+                      <div class="admin-item" data-action="editDevices">
+                        <i class="fas fa-laptop"></i>
+                        <span>تعديل الأجهزة</span>
+                      </div>
+                      <div class="admin-item" data-action="editIcons">
+                        <i class="fas fa-icons"></i>
+                        <span>تعديل الأيقونات</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="admin-section">
+                    <h4>الإعدادات المتقدمة</h4>
+                    <div class="admin-grid">
+                      <div class="admin-item" data-action="userManagement">
+                        <i class="fas fa-users-cog"></i>
+                        <span>إدارة المستخدمين</span>
+                      </div>
+                      <div class="admin-item" data-action="reports">
+                        <i class="fas fa-chart-line"></i>
+                        <span>التقارير والإحصائيات</span>
+                      </div>
+                      <div class="admin-item" data-action="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span>إدارة الإشعارات</span>
+                      </div>
+                      <div class="admin-item" data-action="printerSettings">
+                        <i class="fas fa-print"></i>
+                        <span>إعدادات الطباعة</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة إضافة عنصر إلى الطاولة -->
+  <div class="modal" id="addItemModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">إضافة عنصر إلى الطاولة</h3>
+        <button class="close-modal" id="closeAddItemModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>اختر العنصر</label>
+          <select id="itemSelect" class="form-control">
+            <!-- سيتم ملء الخيارات عبر JavaScript -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الكمية</label>
+          <input type="number" id="itemQuantity" min="1" value="1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-clear" id="cancelAddItem">إلغاء</button>
+        <button class="btn btn-add" id="confirmAddItem">إضافة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة إضافة عنصر جديد إلى القائمة -->
+  <div class="modal" id="addNewItemModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">إضافة عنصر جديد إلى القائمة</h3>
+        <button class="close-modal" id="closeNewItemModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>اسم العنصر</label>
+          <input type="text" id="newItemName" placeholder="مثال: شاي، تايكر،...">
+        </div>
+        <div class="form-group">
+          <label>السعر (دينار)</label>
+          <input type="number" id="newItemPrice" min="0" placeholder="مثال: 1000">
+        </div>
+        <div class="form-group">
+          <label>الصورة</label>
+          <input type="file" id="newItemImage">
+        </div>
+        <div class="form-group">
+          <label>الفئة</label>
+          <select id="newItemCategory">
+            <option value="hot-drinks">مشروبات ساخنة</option>
+            <option value="cold-drinks">مشروبات باردة</option>
+            <option value="food">مأكولات</option>
+            <option value="hookah">نركيلة</option>
+            <option value="other">أخرى</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-clear" id="cancelNewItem">إلغاء</button>
+        <button class="btn btn-add" id="confirmNewItem">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تأكيد إنهاء الجلسة -->
+  <div class="modal" id="confirmEndSessionModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">إنهاء الجلسة</h3>
+        <button class="close-modal" id="closeConfirmEndSessionModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>مدة الجلسة: <strong id="sessionDurationText">00:00:00</strong></p>
+        <p>التكلفة الإجمالية: <strong id="sessionCostText">0 دينار</strong></p>
+        <p>هل أنت متأكد من إنهاء الجلسة؟</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-clear" id="cancelEndSession">إلغاء</button>
+        <button class="btn btn-end" id="confirmEndSession">تأكيد</button>
+        <button class="btn btn-add" id="printSessionBill">طباعة الفاتورة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تأكيد إنهاء الطاولة -->
+  <div class="modal" id="confirmCheckoutModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">إنهاء الطاولة</h3>
+        <button class="close-modal" id="closeConfirmCheckoutModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>إجمالي الطلب: <strong id="checkoutTotalText">0 دينار</strong></p>
+        <p>هل أنت متأكد من إنهاء الطاولة؟</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-clear" id="cancelCheckout">إلغاء</button>
+        <button class="btn btn-checkout" id="confirmCheckout">تأكيد</button>
+        <button class="btn btn-add" id="printTableBill">طباعة الفاتورة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- فاتورة للطباعة -->
+  <div id="invoice-print" style="display: none;"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <script>
+    // بيانات النظام
+    const systemData = {
+      password: "karam9",
+      adminPassword: "k4r4m",
+      hourlyRate: 3000,
+      devicesCount: 8,
+      primaryColor: "#6a1b9a",
+      secondaryColor: "#ff9800",
+      menuItems: [
+        { id: 1, name: "شاي", price: 1000, category: "hot-drinks", image: "https://via.placeholder.com/50?text=شاي" },
+        { id: 2, name: "تايكر", price: 1500, category: "hot-drinks", image: "https://via.placeholder.com/50?text=تايكر" },
+        { id: 3, name: "تايكر مكسيكي", price: 2000, category: "hot-drinks", image: "https://via.placeholder.com/50?text=تايكر+مكسيكي" },
+        { id: 4, name: "صحن فواكه", price: 2500, category: "food", image: "https://via.placeholder.com/50?text=فواكه" },
+        { id: 5, name: "صحن كرزات", price: 2000, category: "food", image: "https://via.placeholder.com/50?text=كرزات" },
+        { id: 6, name: "مشروب دايت", price: 1500, category: "cold-drinks", image: "https://via.placeholder.com/50?text=دايت" },
+        { id: 7, name: "مشروب تضخيم", price: 2000, category: "cold-drinks", image: "https://via.placeholder.com/50?text=تضخيم" },
+        { id: 8, name: "نركيلة", price: 5000, category: "hookah", image: "https://via.placeholder.com/50?text=نركيلة" },
+        { id: 9, name: "ماء", price: 500, category: "cold-drinks", image: "https://via.placeholder.com/50?text=ماء" },
+        { id: 10, name: "مشروب غازي", price: 1500, category: "cold-drinks", image: "https://via.placeholder.com/50?text=غازي" }
+      ],
+      tables: [],
+      devices: [],
+      revenue: 0,
+      lastReset: new Date().toISOString().split('T')[0],
+      notifications: true,
+      hourlyNotifications: true
+    };
+
+    // متغيرات النظام
+    let currentTable = null;
+    let currentDevice = null;
+    let deviceTimers = {};
+    let notificationTimers = {};
+    let isAdminLoggedIn = false;
+
+    // تهيئة النظام
+    function initializeSystem() {
+      // تحميل البيانات من localStorage إن وجدت
+      const savedData = localStorage.getItem('mkSystemData');
+      if (savedData) {
+        Object.assign(systemData, JSON.parse(savedData));
+      } else {
+        // إنشاء طاولات إذا لم تكن موجودة
+        if (systemData.tables.length === 0) {
+          for (let i = 1; i <= 12; i++) {
+            systemData.tables.push({
+              id: i,
+              number: i,
+              status: "available",
+              items: [],
+              total: 0
+            });
+          }
+        }
+        // إنشاء أجهزة إذا لم تكن موجودة
+        if (systemData.devices.length === 0) {
+          for (let i = 1; i <= systemData.devicesCount; i++) {
+            systemData.devices.push({
+              id: i,
+              number: i,
+              status: "available",
+              startTime: null,
+              currentSession: null
+            });
+          }
+        }
+        saveSystemData();
+      }
+
+      // تطبيق الألوان
+      applyColors();
+
+      // تحديث الواجهة
+      updateDashboardStats();
+      renderTables();
+      renderDevices();
+      renderMenuItems();
+      populateItemSelect();
+
+      // إعداد عناصر الواجهة
+      setupUI();
+
+      // بدء تحديث المؤقتات
+      startDeviceTimers();
+    }
+
+    // حفظ بيانات النظام
+    function saveSystemData() {
+      localStorage.setItem('mkSystemData', JSON.stringify(systemData));
+    }
+
+    // تطبيق الألوان المختارة
+    function applyColors() {
+      document.documentElement.style.setProperty('--primary-color', systemData.primaryColor);
+      document.documentElement.style.setProperty('--secondary-color', systemData.secondaryColor);
+    }
+
+    // تحديث إحصائيات لوحة التحكم
+    function updateDashboardStats() {
+      const occupiedTables = systemData.tables.filter(table => table.status === 'busy').length;
+      const occupiedDevices = systemData.devices.filter(device => device.status === 'busy').length;
+      
+      document.getElementById('occupiedTables').textContent = occupiedTables;
+      document.getElementById('occupiedDevices').textContent = occupiedDevices;
+      document.getElementById('todayRevenue').textContent = systemData.revenue + ' دينار';
+    }
+
+    // عرض الطاولات
+    function renderTables() {
+      const tablesContainer = document.getElementById('tablesContainer');
+      tablesContainer.innerHTML = '';
+      
+      systemData.tables.forEach(table => {
+        const tableElement = document.createElement('div');
+        tableElement.className = 'table';
+        tableElement.innerHTML = `
+          <div class="table-header">
+            <div class="table-title">طاولة ${table.number}</div>
+            <div class="table-status ${table.status === 'available' ? 'status-available' : 'status-busy'}">
+              ${table.status === 'available' ? 'متاحة' : 'مشغولة'}
+            </div>
+          </div>
+          <div class="table-details">
+            ${table.status === 'busy' ? `
+              <div class="menu-items">
+                ${table.items.map(item => `
+                  <div class="menu-item">
+                    <img src="${item.image}" alt="${item.name}">
+                    <div class="item-info">
+                      <div class="item-name">${item.name} × ${item.quantity}</div>
+                      <div class="item-price">${item.price * item.quantity} دينار</div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="total-price">المجموع: ${table.total} دينار</div>
+            ` : '<p>الطاولة متاحة</p>'}
+          </div>
+          <div class="table-actions">
+            ${table.status === 'available' ? 
+              `<button class="btn btn-add" data-action="occupy" data-table="${table.id}">بدء الجلسة</button>` : 
+              `
+              <button class="btn btn-add" data-action="add" data-table="${table.id}">إضافة عنصر</button>
+              <button class="btn btn-clear" data-action="clear" data-table="${table.id}">مسح الطلب</button>
+              <button class="btn btn-checkout" data-action="checkout" data-table="${table.id}">إنهاء الطاولة</button>
+              `
+            }
+          </div>
+        `;
+        tablesContainer.appendChild(tableElement);
+      });
+    }
+
+    // عرض الأجهزة
+    function renderDevices() {
+      const devicesContainer = document.getElementById('devicesContainer');
+      devicesContainer.innerHTML = '';
+      
+      systemData.devices.forEach(device => {
+        let timerHtml = '';
+        let cost = 0;
+        
+        if (device.status === 'busy') {
+          const startTime = new Date(device.startTime);
+          const now = new Date();
+          const diff = Math.floor((now - startTime) / 1000); // الفرق بالثواني
+          const hours = Math.floor(diff / 3600);
+          const minutes = Math.floor((diff % 3600) / 60);
+          const seconds = diff % 60;
+          const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          
+          cost = Math.ceil(diff / 3600 * systemData.hourlyRate);
+          timerHtml = `
+            <div class="timer">${formattedTime}</div>
+            <div class="price">التكلفة: ${cost} دينار</div>
+          `;
+        }
+        
+        const deviceElement = document.createElement('div');
+        deviceElement.className = 'device';
+        deviceElement.innerHTML = `
+          <div class="device-header">
+            <div class="device-title">جهاز ${device.number}</div>
+            <div class="device-status ${device.status === 'available' ? 'status-available' : 'status-busy'}">
+              ${device.status === 'available' ? 'متاح' : 'مشغول'}
+            </div>
+          </div>
+          <div class="device-details">
+            ${device.status === 'busy' ? timerHtml : '<p>الجهاز متاح للاستخدام</p>'}
+          </div>
+          <div class="device-actions">
+            ${device.status === 'available' ? 
+              `<button class="btn btn-start" data-action="start" data-device="${device.id}">بدء الجلسة</button>` : 
+              `<button class="btn btn-end" data-action="end" data-device="${device.id}">إنهاء الجلسة</button>`
+            }
+          </div>
+        `;
+        devicesContainer.appendChild(deviceElement);
+      });
+    }
+
+    // عرض عناصر القائمة
+    function renderMenuItems() {
+      const menuItemsList = document.getElementById('menuItemsList');
+      menuItemsList.innerHTML = '';
+      
+      systemData.menuItems.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'menu-item-card';
+        itemElement.innerHTML = `
+          <img src="${item.image}" alt="${item.name}">
+          <div class="menu-item-info">
+            <div><strong>${item.name}</strong></div>
+            <div>${item.price} دينار - ${getCategoryName(item.category)}</div>
+          </div>
+          <div class="menu-item-actions">
+            <button class="btn btn-edit" data-action="edit" data-item="${item.id}">تعديل</button>
+            <button class="btn btn-delete" data-action="delete" data-item="${item.id}">حذف</button>
+          </div>
+        `;
+        menuItemsList.appendChild(itemElement);
+      });
+    }
+
+    // الحصول على اسم الفئة
+    function getCategoryName(category) {
+      const categories = {
+        'hot-drinks': 'مشروبات ساخنة',
+        'cold-drinks': 'مشروبات باردة',
+        'food': 'مأكولات',
+        'hookah': 'نركيلة',
+        'other': 'أخرى'
+      };
+      return categories[category] || category;
+    }
+
+    // تعبئة قائمة العناصر
+    function populateItemSelect() {
+      const itemSelect = document.getElementById('itemSelect');
+      itemSelect.innerHTML = '';
+      
+      systemData.menuItems.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = `${item.name} - ${item.price} دينار`;
+        itemSelect.appendChild(option);
+      });
+    }
+
+    // بدء مؤقتات الأجهزة
+    function startDeviceTimers() {
+      // إيقاف أي مؤقتات سابقة
+      for (const timerId in deviceTimers) {
+        clearInterval(deviceTimers[timerId]);
+        clearTimeout(notificationTimers[timerId]);
+      }
+      
+      deviceTimers = {};
+      notificationTimers = {};
+      
+      // بدء مؤقتات للأجهزة المشغولة
+      systemData.devices.forEach(device => {
+        if (device.status === 'busy') {
+          startTimerForDevice(device.id);
+        }
+      });
+    }
+
+    // بدء المؤقت لجهاز معين
+    function startTimerForDevice(deviceId) {
+      const device = systemData.devices.find(d => d.id === deviceId);
+      if (!device || device.status !== 'busy') return;
+      
+      // إزالة أي مؤقتات سابقة لهذا الجهاز
+      if (deviceTimers[deviceId]) clearInterval(deviceTimers[deviceId]);
+      if (notificationTimers[deviceId]) clearTimeout(notificationTimers[deviceId]);
+      
+      const startTime = new Date(device.startTime);
+      let lastHour = 0;
+      
+      deviceTimers[deviceId] = setInterval(() => {
+        const now = new Date();
+        const diff = Math.floor((now - startTime) / 1000);
+        const hours = Math.floor(diff / 3600);
+        
+        // إذا مرت ساعة كاملة ولم يتم إرسال الإشعار بعد
+        if (systemData.hourlyNotifications && hours > lastHour) {
+          lastHour = hours;
+          showNotification(`انتهت ${hours} ساعة في الجهاز ${device.number}`, 'warning');
+          
+          // إعادة ضبط المؤقت للإشعار التالي
+          if (notificationTimers[deviceId]) clearTimeout(notificationTimers[deviceId]);
+          notificationTimers[deviceId] = setTimeout(() => {
+            startTimerForDevice(deviceId);
+          }, 5000); // تأخير 5 ثواني قبل بدء المؤقت التالي
+        }
+        
+        // تحديث واجهة المستخدم للجهاز
+        const deviceElement = document.querySelector(`.device[data-device-id="${deviceId}"]`);
+        if (deviceElement) {
+          const timerElement = deviceElement.querySelector('.timer');
+          const priceElement = deviceElement.querySelector('.price');
+          
+          if (timerElement && priceElement) {
+            const currentHours = Math.floor(diff / 3600);
+            const currentMinutes = Math.floor((diff % 3600) / 60);
+            const currentSeconds = diff % 60;
+            const formattedTime = `${currentHours.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}:${currentSeconds.toString().padStart(2, '0')}`;
+            const cost = Math.ceil(diff / 3600 * systemData.hourlyRate);
+            
+            timerElement.textContent = formattedTime;
+            priceElement.textContent = `التكلفة: ${cost} دينار`;
+          }
+        }
+      }, 1000);
+    }
+
+    // إظهار الإشعار
+    function showNotification(message, type = 'info') {
+      if (!systemData.notifications) return;
+      
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.innerHTML = `
+        <i class="fas fa-${type === 'warning' ? 'exclamation-triangle' : 
+                        type === 'success' ? 'check-circle' : 
+                        type === 'danger' ? 'times-circle' : 'info-circle'}"></i>
+        <div class="notification-content">
+          <p>${message}</p>
+        </div>
+        <button class="notification-close">&times;</button>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // إغلاق الإشعار عند النقر على الزر
+      notification.querySelector('.notification-close').addEventListener('click', () => {
+        notification.remove();
+      });
+      
+      // إزالة الإشعار بعد 5 ثواني
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.style.animation = 'fadeOut 0.5s forwards';
+          setTimeout(() => {
+            if (notification.parentNode) notification.remove();
+          }, 500);
+        }
+      }, 5000);
+    }
+
+    // طباعة فاتورة الطاولة
+    function printTableInvoice(tableId) {
+      const table = systemData.tables.find(t => t.id === tableId);
+      if (!table) return;
+      
+      const invoiceElement = document.getElementById('invoice-print');
+      invoiceElement.innerHTML = '';
+      
+      const invoiceContent = document.createElement('div');
+      invoiceContent.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2>فاتورة طاولة ${table.number}</h2>
+          <p>${new Date().toLocaleString()}</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="background: #f0f0f0;">
+              <th style="border: 1px solid #ddd; padding: 10px;">العنصر</th>
+              <th style="border: 1px solid #ddd; padding: 10px;">الكمية</th>
+              <th style="border: 1px solid #ddd; padding: 10px;">السعر</th>
+              <th style="border: 1px solid #ddd; padding: 10px;">المجموع</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${table.items.map(item => `
+              <tr>
+                <td style="border: 1px solid #ddd; padding: 10px;">${item.name}</td>
+                <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">${item.quantity}</td>
+                <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">${item.price} دينار</td>
+                <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">${item.price * item.quantity} دينار</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="text-align: right; font-size: 1.2rem; font-weight: bold; border-top: 2px solid #333; padding-top: 10px;">
+          الإجمالي: ${table.total} دينار
+        </div>
+        <div style="text-align: center; margin-top: 30px; font-style: italic;">
+          شكرًا لزيارتكم - نظام إدارة MK
+        </div>
+      `;
+      
+      invoiceElement.appendChild(invoiceContent);
+      
+      // طباعة الفاتورة
+      window.print();
+    }
+
+    // طباعة فاتورة الجهاز
+    function printDeviceInvoice(deviceId) {
+      const device = systemData.devices.find(d => d.id === deviceId);
+      if (!device || device.status !== 'busy') return;
+      
+      const startTime = new Date(device.startTime);
+      const now = new Date();
+      const diff = Math.floor((now - startTime) / 1000);
+      const hours = Math.floor(diff / 3600);
+      const minutes = Math.floor((diff % 3600) / 60);
+      const seconds = diff % 60;
+      const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      const cost = Math.ceil(diff / 3600 * systemData.hourlyRate);
+      
+      const invoiceElement = document.getElementById('invoice-print');
+      invoiceElement.innerHTML = '';
+      
+      const invoiceContent = document.createElement('div');
+      invoiceContent.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2>فاتورة جهاز ${device.number}</h2>
+          <p>${new Date().toLocaleString()}</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="background: #f0f0f0;">
+              <th style="border: 1px solid #ddd; padding: 10px;">الوصف</th>
+              <th style="border: 1px solid #ddd; padding: 10px;">القيمة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 10px;">رقم الجهاز</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">${device.number}</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 10px;">وقت البدء</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">${startTime.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 10px;">وقت الانتهاء</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">${now.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 10px;">المدة الكلية</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">${formattedTime}</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 10px;">سعر الساعة</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">${systemData.hourlyRate} دينار</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="text-align: right; font-size: 1.2rem; font-weight: bold; border-top: 2px solid #333; padding-top: 10px;">
+          الإجمالي: ${cost} دينار
+        </div>
+        <div style="text-align: center; margin-top: 30px; font-style: italic;">
+          شكرًا لزيارتكم - نظام إدارة MK
+        </div>
+      `;
+      
+      invoiceElement.appendChild(invoiceContent);
+      
+      // طباعة الفاتورة
+      window.print();
+    }
+
+    // إعداد عناصر الواجهة
+    function setupUI() {
+      // تسجيل الدخول
+      document.getElementById('loginBtn').addEventListener('click', () => {
+        const password = document.getElementById('passwordInput').value;
+        if (password === systemData.password) {
+          document.getElementById('loginScreen').classList.add('hidden');
+          document.getElementById('mainScreen').classList.add('active');
+          document.getElementById('loginError').style.display = 'none';
+        } else {
+          document.getElementById('loginError').style.display = 'flex';
+        }
+      });
+
+      // إغلاق رسالة الخطأ
+      document.getElementById('closeLoginError').addEventListener('click', () => {
+        document.getElementById('loginError').style.display = 'none';
+      });
+
+      // تسجيل الخروج
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('mainScreen').classList.remove('active');
+        document.getElementById('passwordInput').value = '';
+      });
+
+      // التبديل بين الأقسام
+      const sidebarLinks = document.querySelectorAll('.sidebar-menu a');
+      const sections = {
+        dashboard: document.getElementById('dashboardSection'),
+        cafe: document.getElementById('cafeSection'),
+        gaming: document.getElementById('gamingSection'),
+        settings: document.getElementById('settingsSection')
+      };
+
+      sidebarLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // إزالة "active" من جميع الروابط
+          sidebarLinks.forEach(l => l.classList.remove('active'));
+          this.classList.add('active');
+          
+          // إخفاء كل الأقسام
+          Object.values(sections).forEach(section => {
+            section.classList.remove('active');
+          });
+          
+          // إظهار القسم المناسب
+          const sectionId = this.getAttribute('data-section');
+          if (sections[sectionId]) {
+            sections[sectionId].classList.add('active');
+          }
+        });
+      });
+
+      // التبديل بين تبويبات الإعدادات
+      const settingsTabs = document.querySelectorAll('.settings-tab');
+      const settingsTabContents = {
+        appearance: document.getElementById('appearanceTab'),
+        menu: document.getElementById('menuTab'),
+        gaming: document.getElementById('gamingTab'),
+        admin: document.getElementById('adminTab')
+      };
+
+      settingsTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          // إزالة "active" من جميع التبويبات
+          settingsTabs.forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          
+          // إخفاء كل المحتويات
+          Object.values(settingsTabContents).forEach(content => {
+            content.classList.remove('active');
+          });
+          
+          // إظهار المحتوى المناسب
+          const tabId = this.getAttribute('data-tab');
+          if (settingsTabContents[tabId]) {
+            settingsTabContents[tabId].classList.add('active');
+          }
+        });
+      });
+
+      // اختيار الألوان
+      const colorOptions = document.querySelectorAll('.color-option');
+      colorOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          const colorType = this.parentElement.previousElementSibling.textContent.includes('الأساسي') ? 'primary' : 'secondary';
+          const colorValue = this.getAttribute('data-color');
+          
+          // إزالة "selected" من جميع الخيارات في هذه المجموعة
+          this.parentElement.querySelectorAll('.color-option').forEach(opt => {
+            opt.classList.remove('selected');
+          });
+          
+          this.classList.add('selected');
+          
+          // تحديث اللون في النظام
+          systemData[`${colorType}Color`] = `#${colorValue}`;
+          applyColors();
+        });
+      });
+
+      // أحداث الطاولات
+      document.addEventListener('click', (e) => {
+        if (e.target.dataset.action) {
+          const tableId = parseInt(e.target.dataset.table);
+          const table = systemData.tables.find(t => t.id === tableId);
+          
+          switch(e.target.dataset.action) {
+            case 'occupy':
+              table.status = 'busy';
+              saveSystemData();
+              renderTables();
+              updateDashboardStats();
+              showNotification(`تم بدء الجلسة على الطاولة ${table.number}`, 'success');
+              break;
+              
+            case 'add':
+              currentTable = tableId;
+              document.getElementById('addItemModal').classList.add('active');
+              break;
+              
+            case 'clear':
+              table.items = [];
+              table.total = 0;
+              saveSystemData();
+              renderTables();
+              showNotification(`تم مسح طلب الطاولة ${table.number}`, 'info');
+              break;
+              
+            case 'checkout':
+              currentTable = tableId;
+              document.getElementById('checkoutTotalText').textContent = `${table.total} دينار`;
+              document.getElementById('confirmCheckoutModal').classList.add('active');
+              break;
+          }
+        }
+      });
+
+      // أحداث الأجهزة
+      document.addEventListener('click', (e) => {
+        if (e.target.dataset.action) {
+          const deviceId = parseInt(e.target.dataset.device);
+          const device = systemData.devices.find(d => d.id === deviceId);
+          
+          switch(e.target.dataset.action) {
+            case 'start':
+              device.status = 'busy';
+              device.startTime = new Date().toISOString();
+              saveSystemData();
+              renderDevices();
+              updateDashboardStats();
+              startTimerForDevice(deviceId);
+              showNotification(`تم بدء الجلسة على الجهاز ${device.number}`, 'success');
+              break;
+              
+            case 'end':
+              currentDevice = deviceId;
+              const startTime = new Date(device.startTime);
+              const now = new Date();
+              const diff = Math.floor((now - startTime) / 1000);
+              const hours = Math.floor(diff / 3600);
+              const minutes = Math.floor((diff % 3600) / 60);
+              const seconds = diff % 60;
+              const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+              const cost = Math.ceil(diff / 3600 * systemData.hourlyRate);
+              
+              document.getElementById('sessionDurationText').textContent = formattedTime;
+              document.getElementById('sessionCostText').textContent = `${cost} دينار`;
+              document.getElementById('confirmEndSessionModal').classList.add('active');
+              break;
+          }
+        }
+      });
+
+      // أحداث القائمة
+      document.addEventListener('click', (e) => {
+        if (e.target.dataset.action === 'addMenuItem') {
+          document.getElementById('addNewItemModal').classList.add('active');
+        }
+      });
+
+      // إضافة عنصر إلى الطاولة
+      document.getElementById('confirmAddItem').addEventListener('click', () => {
+        const itemId = parseInt(document.getElementById('itemSelect').value);
+        const quantity = parseInt(document.getElementById('itemQuantity').value);
+        const item = systemData.menuItems.find(i => i.id === itemId);
+        const table = systemData.tables.find(t => t.id === currentTable);
+        
+        const existingItem = table.items.find(i => i.id === itemId);
+        
+        if (existingItem) {
+          existingItem.quantity += quantity;
+        } else {
+          table.items.push({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            quantity: quantity
+          });
+        }
+        
+        table.total += item.price * quantity;
+        saveSystemData();
+        renderTables();
+        document.getElementById('addItemModal').classList.remove('active');
+        document.getElementById('itemQuantity').value = 1;
+        showNotification(`تم إضافة ${item.name} إلى الطاولة ${table.number}`, 'success');
+      });
+
+      // إلغاء إضافة عنصر
+      document.getElementById('cancelAddItem').addEventListener('click', () => {
+        document.getElementById('addItemModal').classList.remove('active');
+        document.getElementById('itemQuantity').value = 1;
+      });
+
+      // إغلاق نافذة إضافة عنصر
+      document.getElementById('closeAddItemModal').addEventListener('click', () => {
+        document.getElementById('addItemModal').classList.remove('active');
+        document.getElementById('itemQuantity').value = 1;
+      });
+
+      // تأكيد إنهاء الطاولة
+      document.getElementById('confirmCheckout').addEventListener('click', () => {
+        const table = systemData.tables.find(t => t.id === currentTable);
+        systemData.revenue += table.total;
+        
+        table.status = 'available';
+        table.items = [];
+        table.total = 0;
+        
+        saveSystemData();
+        renderTables();
+        updateDashboardStats();
+        document.getElementById('confirmCheckoutModal').classList.remove('active');
+        showNotification(`تم إنهاء الطاولة ${table.number} والإيرادات: ${table.total} دينار`, 'success');
+      });
+
+      // إلغاء إنهاء الطاولة
+      document.getElementById('cancelCheckout').addEventListener('click', () => {
+        document.getElementById('confirmCheckoutModal').classList.remove('active');
+      });
+
+      // إغلاق نافذة تأكيد إنهاء الطاولة
+      document.getElementById('closeConfirmCheckoutModal').addEventListener('click', () => {
+        document.getElementById('confirmCheckoutModal').classList.remove('active');
+      });
+
+      // تأكيد إنهاء الجلسة
+      document.getElementById('confirmEndSession').addEventListener('click', () => {
+        const device = systemData.devices.find(d => d.id === currentDevice);
+        const startTime = new Date(device.startTime);
+        const now = new Date();
+        const diff = Math.floor((now - startTime) / 1000);
+        const cost = Math.ceil(diff / 3600 * systemData.hourlyRate);
+        
+        systemData.revenue += cost;
+        device.status = 'available';
+        device.startTime = null;
+        
+        saveSystemData();
+        renderDevices();
+        updateDashboardStats();
+        document.getElementById('confirmEndSessionModal').classList.remove('active');
+        
+        // إيقاف المؤقتات
+        if (deviceTimers[device.id]) clearInterval(deviceTimers[device.id]);
+        if (notificationTimers[device.id]) clearTimeout(notificationTimers[device.id]);
+        
+        showNotification(`تم إنهاء الجلسة على الجهاز ${device.number} والإيرادات: ${cost} دينار`, 'success');
+      });
+
+      // إلغاء إنهاء الجلسة
+      document.getElementById('cancelEndSession').addEventListener('click', () => {
+        document.getElementById('confirmEndSessionModal').classList.remove('active');
+      });
+
+      // إغلاق نافذة تأكيد إنهاء الجلسة
+      document.getElementById('closeConfirmEndSessionModal').addEventListener('click', () => {
+        document.getElementById('confirmEndSessionModal').classList.remove('active');
+      });
+
+      // إضافة عنصر جديد إلى القائمة
+      document.getElementById('confirmNewItem').addEventListener('click', () => {
+        const name = document.getElementById('newItemName').value;
+        const price = parseInt(document.getElementById('newItemPrice').value);
+        const category = document.getElementById('newItemCategory').value;
+        const imageInput = document.getElementById('newItemImage');
+        
+        if (!name || isNaN(price)) {
+          showNotification('الرجاء إدخال بيانات صحيحة', 'danger');
+          return;
+        }
+        
+        // في تطبيق حقيقي، هنا نتعامل مع رفع الصورة
+        const image = imageInput.files.length > 0 ? 
+          URL.createObjectURL(imageInput.files[0]) : 
+          `https://via.placeholder.com/50?text=${encodeURIComponent(name)}`;
+        
+        const newItem = {
+          id: systemData.menuItems.length > 0 ? 
+            Math.max(...systemData.menuItems.map(i => i.id)) + 1 : 1,
+          name: name,
+          price: price,
+          category: category,
+          image: image
+        };
+        
+        systemData.menuItems.push(newItem);
+        saveSystemData();
+        renderMenuItems();
+        populateItemSelect();
+        document.getElementById('addNewItemModal').classList.remove('active');
+        document.getElementById('newItemName').value = '';
+        document.getElementById('newItemPrice').value = '';
+        document.getElementById('newItemImage').value = '';
+        showNotification(`تم إضافة ${name} إلى القائمة`, 'success');
+      });
+
+      // إلغاء إضافة عنصر جديد
+      document.getElementById('cancelNewItem').addEventListener('click', () => {
+        document.getElementById('addNewItemModal').classList.remove('active');
+        document.getElementById('newItemName').value = '';
+        document.getElementById('newItemPrice').value = '';
+        document.getElementById('newItemImage').value = '';
+      });
+
+      // إغلاق نافذة إضافة عنصر جديد
+      document.getElementById('closeNewItemModal').addEventListener('click', () => {
+        document.getElementById('addNewItemModal').classList.remove('active');
+        document.getElementById('newItemName').value = '';
+        document.getElementById('newItemPrice').value = '';
+        document.getElementById('newItemImage').value = '';
+      });
+
+      // حفظ إعدادات المظهر
+      document.getElementById('saveAppearanceBtn').addEventListener('click', () => {
+        saveSystemData();
+        showNotification('تم حفظ التغييرات بنجاح', 'success');
+      });
+
+      // حفظ إعدادات الألعاب
+      document.getElementById('saveGamingSettingsBtn').addEventListener('click', () => {
+        const devicesCount = parseInt(document.getElementById('devicesCount').value);
+        const hourlyPrice = parseInt(document.getElementById('hourlyPrice').value);
+        
+        if (isNaN(devicesCount) || isNaN(hourlyPrice)) {
+          showNotification('الرجاء إدخال قيم صحيحة', 'danger');
+          return;
+        }
+        
+        systemData.devicesCount = devicesCount;
+        systemData.hourlyRate = hourlyPrice;
+        
+        // تعديل عدد الأجهزة إذا تغير
+        if (systemData.devices.length < devicesCount) {
+          // إضافة أجهزة جديدة
+          const startId = systemData.devices.length > 0 ? 
+            Math.max(...systemData.devices.map(d => d.id)) + 1 : 1;
+          for (let i = startId; i <= devicesCount; i++) {
+            systemData.devices.push({
+              id: i,
+              number: i,
+              status: "available",
+              startTime: null,
+              currentSession: null
+            });
+          }
+        } else if (systemData.devices.length > devicesCount) {
+          // إزالة الأجهزة الزائدة (إذا كانت غير مشغولة)
+          systemData.devices = systemData.devices.slice(0, devicesCount);
+        }
+        
+        saveSystemData();
+        renderDevices();
+        showNotification('تم حفظ التغييرات بنجاح', 'success');
+      });
+
+      // إضافة طاولة جديدة
+      document.getElementById('addTableBtn').addEventListener('click', () => {
+        const newTableId = systemData.tables.length > 0 ? 
+          Math.max(...systemData.tables.map(t => t.id)) + 1 : 1;
+        
+        systemData.tables.push({
+          id: newTableId,
+          number: newTableId,
+          status: "available",
+          items: [],
+          total: 0
+        });
+        
+        saveSystemData();
+        renderTables();
+        showNotification(`تم إضافة الطاولة ${newTableId}`, 'success');
+      });
+
+      // إضافة عنصر جديد إلى القائمة
+      document.getElementById('addMenuItemBtn').addEventListener('click', () => {
+        document.getElementById('addNewItemModal').classList.add('active');
+      });
+
+      // تسجيل الدخول للتحكم الكامل
+      document.getElementById('adminLoginBtn').addEventListener('click', () => {
+        const password = document.getElementById('adminPassword').value;
+        if (password === systemData.adminPassword) {
+          document.getElementById('adminControls').style.display = 'block';
+          isAdminLoggedIn = true;
+          showNotification('تم تسجيل الدخول بنجاح إلى التحكم الكامل', 'success');
+        } else {
+          showNotification('كلمة المرور غير صحيحة', 'danger');
+        }
+      });
+
+      // طباعة فاتورة الطاولة
+      document.getElementById('printTableBill').addEventListener('click', () => {
+        printTableInvoice(currentTable);
+      });
+
+      // طباعة فاتورة الجهاز
+      document.getElementById('printSessionBill').addEventListener('click', () => {
+        printDeviceInvoice(currentDevice);
+      });
+
+      // أدوات التحكم الكامل
+      document.querySelectorAll('.admin-item').forEach(item => {
+        item.addEventListener('click', function() {
+          if (!isAdminLoggedIn) {
+            showNotification('الرجاء تسجيل الدخول أولاً', 'danger');
+            return;
+          }
+          
+          const action = this.getAttribute('data-action');
+          showNotification(`تم تنفيذ أمر: ${action}`, 'info');
+          
+          // تنفيذ الإجراءات المختلفة حسب النوع
+          switch(action) {
+            case 'resetSystem':
+              if (confirm('هل أنت متأكد من إعادة ضبط النظام؟ سيتم حذف جميع البيانات.')) {
+                localStorage.removeItem('mkSystemData');
+                location.reload();
+              }
+              break;
+              
+            case 'exportData':
+              const dataStr = JSON.stringify(systemData, null, 2);
+              const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+              const exportFileDefaultName = 'mk-system-data.json';
+              
+              const linkElement = document.createElement('a');
+              linkElement.setAttribute('href', dataUri);
+              linkElement.setAttribute('download', exportFileDefaultName);
+              linkElement.click();
+              break;
+              
+            case 'editMenu':
+              document.querySelector('[data-tab="menu"]').click();
+              break;
+              
+            case 'editTables':
+              // يمكن تنفيذ إجراءات أخرى هنا
+              break;
+          }
+        });
+      });
+    }
+
+    // بدء النظام عند تحميل الصفحة
+    window.addEventListener('DOMContentLoaded', initializeSystem);
+  </script>
+</body>
+</html>
